@@ -6,13 +6,14 @@
   "author": "Suhaib Affan",
   "license": "MIT",
   "scripts": {
-    "start" : "node index.js --unhandled-rejections=strict"
+    "start": "node index.js --unhandled-rejections=strict"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "joi": "^17.2.1",
     "mongodb": "^3.6.2",
+    "morgan": "^1.10.0",
     "p-retry": "^4.2.0"
   }
 }

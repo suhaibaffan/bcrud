@@ -1,22 +1,24 @@
 const express = require( 'express' );
 const bodyParser = require('body-parser')
-const Joi = require('joi');
+const morgan = require('morgan');
 const { connectDb, listDatabases } = require( './db' );
-const { employeeSchema } = require( './schemas' );
+const { employeeSchema, updateEmployeeSchema } = require( './schemas' );
 
 const app = express();
 
 main( app );
 
 
-async function main ( server ) {
+async function main () {
     const client = await connectDb();
     const berkadiaDB = client.db( 'berkadia' );
-    app.listen( 3000, () => console.log( 'Server listening on 3000' ) );
+    app.listen( 3000, () => console.log( 'app listening on 3000' ) );
 
-    server.use( bodyParser.urlencoded({ extended: true }) );
+    // request logging.
+    app.use( morgan( 'short' ) );
+    app.use( bodyParser.urlencoded({ extended: true }) );
 
-    server.get( '/testConnection', async ( req, res ) => {
+    app.get( '/testConnection', async ( req, res ) => {
         try {
             await client.db().admin().listDatabases();
         } catch ( err ) {
@@ -26,13 +28,13 @@ async function main ( server ) {
         res.send( 'done' );
     });
 
-    server.get( '/getAllEmployees', async ( req, res ) => {
+    app.get( '/getAllEmployees', async ( req, res ) => {
         const employees = await berkadiaDB.collection( 'employees' ).find().toArray();
 
         res.json({ employees });
     });
 
-    server.post( '/createEmployee', validateMiddleware( employeeSchema ), errorHandler, async ( req, res ) => {
+    app.post( '/createEmployee', validateMiddleware( employeeSchema ), errorHandler, async ( req, res ) => {
         try {
             const employee = await berkadiaDB.collection( 'employees' ).findOne({ email: req.body.email });
             if ( !employee ) {
@@ -47,20 +49,68 @@ async function main ( server ) {
         }
     });
 
-    server.put( '/updateEmployee', async ( req, res ) => {
+    app.put( '/updateEmployee', async ( req, res ) => {
         try {
             const { email, firstName, lastName, department } = req.body;
-            const employee = await berkadiaDB.collection( 'employees' ).findOneAndReplace({ email }, {
+            if ( email ) {
+                updateEmployeeSchema.validateAsync({ email }).catch( err => {
+                    res.status( 400 ).send( err.details[0].message );
+                    throw new Error( err.details[0].message );
+                });
+            }
+
+            if ( firstName ) {
+                updateEmployeeSchema.validateAsync({ firstName }).catch( err => {
+                    res.status( 400 ).send( err.details[0].message );
+                    throw new Error( err.details[0].message );
+                });
+            }
+
+            if ( lastName ) {
+                updateEmployeeSchema.validateAsync({ lastName }).catch( err => {
+                    res.status( 400 ).send( err.details[0].message );
+                    throw new Error( err.details[0].message );
+                });
+            }
+
+            if ( department ) {
+                updateEmployeeSchema.validateAsync({ department }).catch( err => {
+                    res.status( 400 ).send( err.details[0].message );
+                    throw new Error( err.details[0].message );
+                });
+            }
+
+            await berkadiaDB.collection( 'employees' ).findOneAndReplace({ email }, {
                 firstName,
                 lastName,
                 department
             });
-            console.log( employee );
             res.status( 200 ).send( 'Updated employee' );
         } catch ( err ) {
             console.log( err );
             res.status( 500 ).send( 'Something went wrong' );
         }
+    });
+
+    app.delete( '/deleteEmployee', async ( req, res ) => {
+        try {
+            const { email } = req.body;
+
+            updateEmployeeSchema.validateAsync({ email }).catch( err => {
+                res.status( 400 ).send( 'Invalid email' );
+                return;
+            });
+
+            await berkadiaDB.collection( 'employees' ).deleteOne({ email });
+            res.status( 204 );
+        } catch ( err ) {
+            res.status( 500 ).send( 'Something went wrong' );
+        }
+    });
+
+    app.delete( '/clearCollection', async ( req, res ) => {
+        await berkadiaDB.collection( 'employees' ).drop()
+        res.send( 204 );
     });
 }
 
