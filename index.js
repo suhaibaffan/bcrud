@@ -47,10 +47,10 @@ async function main ( server ) {
         }
     });
 
-    server.put( '/updateEmployee', validateMiddleware( employeeSchema), errorHandler, async ( req, res ) => {
+    server.put( '/updateEmployee', async ( req, res ) => {
         try {
-            const { email, firstName, lastName } = req.body;
-            const employee = await berkadiaDB.collection( 'employee' ).findOneAndUpdate({ email }, {
+            const { email, firstName, lastName, department } = req.body;
+            const employee = await berkadiaDB.collection( 'employees' ).findOneAndReplace({ email }, {
                 firstName,
                 lastName,
                 department
@@ -58,6 +58,7 @@ async function main ( server ) {
             console.log( employee );
             res.status( 200 ).send( 'Updated employee' );
         } catch ( err ) {
+            console.log( err );
             res.status( 500 ).send( 'Something went wrong' );
         }
     });
