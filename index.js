@@ -81,6 +81,7 @@ async function main () {
             }
 
             await berkadiaDB.collection( 'employees' ).findOneAndReplace({ email }, {
+                email,
                 firstName,
                 lastName,
                 department
@@ -102,7 +103,7 @@ async function main () {
             });
 
             await berkadiaDB.collection( 'employees' ).deleteOne({ email });
-            res.status( 204 );
+            res.sendStatus( 204 );
         } catch ( err ) {
             res.status( 500 ).send( 'Something went wrong' );
         }
@@ -110,7 +111,7 @@ async function main () {
 
     app.delete( '/clearCollection', async ( req, res ) => {
         await berkadiaDB.collection( 'employees' ).drop()
-        res.send( 204 );
+        res.sendStatus( 204 );
     });
 }
 
