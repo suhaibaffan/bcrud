@@ -1,0 +1,26 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+    labels:
+        app: nodejs
+    name: nodejs
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: nodejs
+    strategy: {}
+    template:
+        metadata:
+            labels:
+                app: nodejs
+        spec:
+            containers:
+            -   image: nodejs
+                name: nodejs
+                imagePullPolicy: Never
+                resources: {}
+                ports:
+                    -   containerPort: 3000
+status: {}

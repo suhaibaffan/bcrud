@@ -7,7 +7,7 @@
 - [Overview](#overview)
 - [How to Build](#how-to-build)
 - [How to Run](#how-to-run)
-<!-- - [How to Deploy](#how-to-deploy) -->
+- [How to Deploy](#how-to-deploy)
 
 <!-- tocstop -->
 
@@ -50,3 +50,19 @@ clone the repo and run `yarn`
 
 - For local just run `yarn start`
 - For docker-compose run `docker-compose up -d`
+
+## How to Deploy
+
+- For minikube run, I have tested on `kubernetes-version=v1.15.3` if you don't have the same version please use the following command:
+```
+minikube delete
+minikube start --kubernetes-version=v1.15.3
+eval $(minikube docker-env)
+docker build -t nodejs .
+kubectl apply -f deployment.yaml 
+kubectl expose deployment nodejs --type=LoadBalancer --port=3000
+```
+Minikube comes with its own docker daemon and not able to find images by default, using  `eval $(minikube docker-env)` we set env variable.
+We have to set ImagePullPolicy to Never in order to use local docker images with the deployment.
+If you are running docker compose after deploying please unset
+environment variable run this command: `eval $(minikube docker-env -u)`

@@ -6,7 +6,8 @@
   "author": "Suhaib Affan",
   "license": "MIT",
   "scripts": {
-    "start": "node index.js --unhandled-rejections=strict"
+    "start": "node index.js --unhandled-rejections=strict",
+    "compose": "docker-compose up"
   },
   "dependencies": {
     "body-parser": "^1.19.0",
