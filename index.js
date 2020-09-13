@@ -27,12 +27,9 @@ async function main ( server ) {
     });
 
     server.get( '/getAllEmployees', async ( req, res ) => {
-        const employeesCursor = await berkadiaDB.collection( 'employees' ).find();
-        const employees = [];
-        employeesCursor.forEach( item => {
-            employeesCursor.push( item );
-        });
-        res.send({ employees });
+        const employees = await berkadiaDB.collection( 'employees' ).find().toArray();
+
+        res.json({ employees });
     });
 
     server.post( '/createEmployee', validateMiddleware( employeeSchema ), errorHandler, async ( req, res ) => {
@@ -58,6 +55,8 @@ async function main ( server ) {
                 lastName,
                 department
             });
+            console.log( employee );
+            res.status( 200 ).send( 'Updated employee' );
         } catch ( err ) {
             res.status( 500 ).send( 'Something went wrong' );
         }
