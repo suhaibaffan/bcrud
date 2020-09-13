@@ -61,6 +61,7 @@ eval $(minikube docker-env)
 docker build -t nodejs .
 kubectl apply -f deployment.yaml 
 kubectl expose deployment nodejs --type=LoadBalancer --port=3000
+minikube service nodejs
 ```
 Minikube comes with its own docker daemon and not able to find images by default, using  `eval $(minikube docker-env)` we set env variable.
 We have to set ImagePullPolicy to Never in order to use local docker images with the deployment.
