@@ -1,4 +1,8 @@
 const MongoClient = require('mongodb').MongoClient;
+const retry = require( 'p-retry' );
+
+const milliseconds = ms => ms;
+const seconds = s => milliseconds( s * 1000 );
 
 async function connectToDb() {
     /**
@@ -15,22 +19,42 @@ async function connectToDb() {
         await client.connect();
 
         // Make the appropriate DB calls
-        await  listDatabases(client);
+        await  testConnection(client);
 
         return client;
     } catch (e) {
         console.error(e);
+        const connection = await retryConnection( client );
+        return connection
     }
 }
 
-async function listDatabases( client ){
-    databasesList = await client.db().admin().listDatabases();
+async function testConnection ( client ){
+    const databasesList = await client.db().admin().listDatabases();
 
-    console.log("Databases:");
+    console.log("Connected to Database");
     databasesList.databases.forEach(db => console.log(` - ${db.name}`));
 };
 
-connectToDb().catch(console.error);
+async function retryConnection ( conn ) {
+    await retry( testConnection( conn ), {
+        retries: 20,
+        maxTimeout: seconds( 30 ),
+        onFailedAttempt: err => {
+            reconnect( conn );
+            if ( err.retriesLeft > 0 )
+                log.warn( `Failed to connect to database. Retrying ${err.retriesLeft} more times. (${err.message})` );
+        }
+    });
+}
+
+async function reconnect ( client ) {
+    console.log( 'retrying db connection...')
+    if ( client ) {
+        client.close();
+    }
+    await connectToDb();
+}
 
 module.exports.connectDb = connectToDb;
-module.exports.listDatabases = listDatabases;
+module.exports.listDatabases = testConnection;
