@@ -105,13 +105,12 @@ async function main () {
         try {
             const { email } = req.body;
 
-            updateEmployeeSchema.validateAsync({ email }).catch( err => {
-                res.status( 400 ).send( 'Invalid email' );
-                return;
+            updateEmployeeSchema.validateAsync({ email }).then( async value => {
+                await berkadiaDB.collection( 'employees' ).deleteOne({ email: value.email });
+                res.sendStatus( 204 );
+            }).catch( err => {
+                return res.status( 400 ).send( 'Invalid email' );
             });
-
-            await berkadiaDB.collection( 'employees' ).deleteOne({ email });
-            res.sendStatus( 204 );
         } catch ( err ) {
             res.status( 500 ).send( 'Something went wrong' );
         }
