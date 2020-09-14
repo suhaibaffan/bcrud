@@ -1,7 +1,7 @@
 const express = require( 'express' );
 const bodyParser = require('body-parser')
 const morgan = require('morgan');
-const { connectDb, listDatabases } = require( './db' );
+const { connectDb } = require( './db' );
 const { employeeSchema, updateEmployeeSchema } = require( './schemas' );
 
 const app = express();
@@ -52,6 +52,7 @@ async function main () {
     app.put( '/updateEmployee', async ( req, res ) => {
         try {
             const { email, firstName, lastName, department } = req.body;
+            let joiDepartment;
             if ( email ) {
                 updateEmployeeSchema.validateAsync({ email }).catch( err => {
                     res.status( 400 ).send( err.details[0].message );
@@ -74,19 +75,26 @@ async function main () {
             }
 
             if ( department ) {
-                updateEmployeeSchema.validateAsync({ department }).catch( err => {
+                updateEmployeeSchema.validateAsync({ department }).then( value => {
+                    joiDepartment = value.department;
+                }).catch( err => {
                     res.status( 400 ).send( err.details[0].message );
                     throw new Error( err.details[0].message );
                 });
             }
 
-            await berkadiaDB.collection( 'employees' ).findOneAndReplace({ email }, {
-                email,
-                firstName,
-                lastName,
-                department
-            });
-            res.status( 200 ).send( 'Updated employee' );
+            const employee = await  berkadiaDB.collection( 'employees' ).findOne({ email });
+            if ( employee ) {
+                await berkadiaDB.collection( 'employees' ).findOneAndReplace({ email }, {
+                    email: email || employee.email,
+                    firstName: firstName || employee.firstName,
+                    lastName: lastName || employee.lastName,
+                    department: joiDepartment || employee.department
+                });
+                return res.status( 200 ).send( 'Updated employee' );
+            }
+            res.status( 400 ).send( 'No employee found' );
+
         } catch ( err ) {
             console.log( err );
             res.status( 500 ).send( 'Something went wrong' );
